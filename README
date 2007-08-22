@@ -1,0 +1,74 @@
+NAME
+    DBIx::Class::HTML::FormFu - Fill a HTML::FormFu form from the database
+    and vice-versa
+
+SYNOPSIS
+        # fill a form from the database
+    
+        my $row = $schema->resultset('Foo')->find($id);
+        
+        $row->fill_formfu_values( $form )
+
+        # populate the database from a submitted form
+    
+        if ( $form->submitted && !$form->has_errors ) {
+        
+            my $row = $schema->resultset('Foo')->find({ id => $params->{id} });
+        
+            $row->populate_from_formfu( $form );
+        }
+
+SUPPORT
+    Project Page:
+
+    <http://code.google.com/p/html-formfu/>
+
+    Mailing list:
+
+    <http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/html-formfu>
+
+    Mailing list archives:
+
+    <http://lists.scsys.co.uk/pipermail/html-formfu/>
+
+BUGS
+    Please submit bugs / feature requests to
+    <http://code.google.com/p/html-formfu/issues/list> (preferred) or
+    <http://rt.perl.org>.
+
+SUBVERSION REPOSITORY
+    The publicly viewable subversion code repository is at
+    <http://html-formfu.googlecode.com/svn/trunk/DBIx-Class-HTML-FormFu>.
+
+    If you wish to contribute, you'll need a GMAIL email address. Then just
+    ask on the mailing list for commit access.
+
+    If you wish to contribute but for some reason really don't want to sign
+    up for a GMAIL account, please post patches to the mailing list
+    (although you'll have to wait for someone to commit them).
+
+    If you have commit permissions, use the HTTPS repository url:
+    <https://html-formfu.googlecode.com/svn/trunk/DBIx-Class-HTML-FormFu>
+
+SEE ALSO
+    HTML::FormFu, DBIx::Class, Catalyst::Controller::HTML::FormFu
+
+AUTHORS
+    Carl Franks
+
+    Adam Herzog
+
+    Daisuke Maki
+
+    Mario Minati
+
+COPYRIGHT AND LICENSE
+    Copyright (C) 2007 by Carl Franks
+
+    Based on the original source code of DBIx::Class::HTMLWidget, copyright
+    Thomas Klausner.
+
+    This library is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself, either Perl version 5.8.8 or, at
+    your option, any later version of Perl 5 you may have available.
+

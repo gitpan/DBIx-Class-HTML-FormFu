@@ -9,7 +9,7 @@ BEGIN {
     }
 }
 
-plan tests => 8;
+plan tests => 7;
 
 use HTML::FormFu;
 use lib 't/lib';
@@ -46,7 +46,6 @@ $form->process({
     
     is( $row->text_col,       'a' );
     is( $row->password_col,   'b');
-    is( $row->checkbox_col,   'foo' );
     is( $row->checkbox_col,   'foo' );
     is( $row->select_col,     '2' );
     is( $row->radio_col,      'yes' );

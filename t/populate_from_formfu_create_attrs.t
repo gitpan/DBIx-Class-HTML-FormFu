@@ -15,7 +15,7 @@ use HTML::FormFu;
 use lib 't/lib';
 use MySchema;
 
-my $form = HTML::FormFu->new->load_config_file('t/form.yml');
+my $form = HTML::FormFu->new->load_config_file('t/form_attrs.yml');
 
 ok( my $schema = MySchema->connect('dbi:SQLite:dbname=t/test.db') );
 
@@ -24,34 +24,21 @@ my $rs = $schema->resultset('Test');
 # make sure db is empty to start
 map { $_->delete } grep { defined } $rs->find({});
 
-{
-    my $row = $rs->new_result({
-        text_col       => 'xyza',
-        password_col   => 'xyzb',
-        checkbox_col   => 'xyzfoo',
-        select_col     => 'xyz2',
-        radio_col      => 'xyzyes',
-        radiogroup_col => 'xyz3',
-        });
-    
-    $row->insert;
-}
-
 # Fake submitted form
 $form->process({
-    hidden_col     => 1,
-    text_col       => 'a',
-    password_col   => 'b',
-    checkbox_col   => 'foo',
-    select_col     => '2',
-    radio_col      => 'yes',
-    radiogroup_col => '3',
+    attrs_hidden_col     => 1,
+    attrs_text_col       => 'a',
+    attrs_password_col   => 'b',
+    attrs_checkbox_col   => 'foo',
+    attrs_select_col     => '2',
+    attrs_radio_col      => 'yes',
+    attrs_radiogroup_col => '3',
     });
 
 {
-    my $row = $rs->find({ hidden_col => $form->params->{hidden_col} });
+    my $row = $rs->new({});
     
-    $row->populate_from_formfu( $form );
+    $row->populate_from_formfu( $form, { prefix_col => 'attrs_' } );
 }
 
 {
@@ -62,7 +49,7 @@ $form->process({
     is( $row->checkbox_col,   'foo' );
     is( $row->select_col,     '2' );
     is( $row->radio_col,      'yes' );
-    is( $row->radiogroup_col, '3' );
+    is( $row->radiogroup_col, '3' )
 }
 
 # empty db again

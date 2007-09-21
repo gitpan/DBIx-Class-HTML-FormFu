@@ -3,10 +3,18 @@ use strict;
 use warnings;
 use Carp qw( croak );
 
-our $VERSION = '0.01001';
+our $VERSION = '0.01002';
 
 sub fill_formfu_values {
-    my ( $dbic, $form ) = @_;
+    my ( $dbic, $form, $attrs ) = @_;
+
+    $attrs = {
+        prefix_col => '',
+        suffix_col => '',
+        %{$attrs || {}}
+    };
+    my $prefix = $attrs->{prefix_col};
+    my $suffix = $attrs->{suffix_col};
     
     my $fields;
     eval {
@@ -15,15 +23,17 @@ sub fill_formfu_values {
     croak "require a compatible form object: $@" if $@;
     
     for my $field (@$fields) {
-        my $name = $field->name;
+        my $field_name = $field->name;
+        next unless defined $field_name;
+
+        my ($dbic_name) = ( $field_name =~ /\A(?:$prefix)?(.*)(?:$suffix)?\z/ );
+        next unless $dbic->can( $dbic_name );
         
-        next unless defined $name && $dbic->can( $name );
-        
-        if ( ref $dbic->$name && $dbic->$name->can('id') && $dbic->$name->id ) {
-		    $field->default( $dbic->$name->id );
+        if ( ref $dbic->$dbic_name && $dbic->$dbic_name->can('id') && $dbic->$dbic_name->id ) {
+		    $field->default( $dbic->$dbic_name->id );
 		}
 		else {
-            $field->default( $dbic->$name );
+            $field->default( $dbic->$dbic_name );
 		}
     }
     
@@ -31,24 +41,31 @@ sub fill_formfu_values {
 }
 
 sub populate_from_formfu {
-    my ( $dbic, $form ) = @_;
-    
+    my ( $dbic, $form, $attrs ) = @_;
+
+    $attrs = {
+        prefix_col => '',
+        suffix_col => '',
+        %{$attrs || {}}
+    };
+
     my %checkbox;
     eval {
         %checkbox = 
-            map { $_->name => undef }
+            map { $_->name => 1 }
             grep { defined $_->name }
             @{ $form->get_fields({ type => 'Checkbox' }) || [] };
     };
     croak "require a compatible form object: $@" if $@;
     
     my $params = $form->params;
-    
+
     for my $col ( $dbic->result_source->columns ) {
         my $col_info    = $dbic->column_info($col);
         my $is_nullable = $col_info->{is_nullable} || 0;
         my $data_type   = $col_info->{data_type} || '';
-        my $value       = $params->{$col};
+        my $form_col    = $attrs->{prefix_col}. $col. $attrs->{suffix_col};
+        my $value       = exists $params->{$form_col} ? $params->{$form_col} : undef;
 
         if ( ( $is_nullable
                || $data_type =~ m/^timestamp|date|int|float|numeric/i )
@@ -59,8 +76,12 @@ sub populate_from_formfu {
             $dbic->$col($value);
         }
         
-        $dbic->$col($value)
-            if defined $value || exists $checkbox{$col};
+        if ( $checkbox{$form_col} && !defined $value && !$is_nullable ) {
+            $dbic->$col( $col_info->{default_value} );
+        }
+        elsif ( defined $value || $checkbox{$form_col} ) {
+            $dbic->$col($value);
+        }
     }
 
     $dbic->update_or_insert;
@@ -92,6 +113,51 @@ DBIx::Class::HTML::FormFu - Fill a HTML::FormFu form from the database and vice-
         
         $row->populate_from_formfu( $form );
     }
+
+=head1 ATTRIBUTES
+
+The fill_formfu_values and populate_from_formfu functions can both take an optional hasref argument to process the field names from form field name to database fieldname.
+
+The hasref takes to arguments:
+    prefix_col takes a string to add to the begining of the form field names.
+    suffix_col takes a string to add to the end of the form field names.
+
+=head2 Example
+
+If you have the following form fields:
+    private_street
+    private_city
+    private_email
+    office_street
+    office_city
+    office_email
+
+You most likely would like to save both datasets in same table:
+    my $private = $user->new_related( 'data', { type => 'private' } );
+    $private->populate_from_formfu( $form, { prefix_col => 'private_' } );
+    my $office = $user->new_related( 'data', { type => 'office' } );
+    $office->populate_from_formfu( $form, { prefix_col => 'office_' } );
+
+The table needs the following rows:
+    id     (not really needed)
+    street
+    city
+    email
+    type
+    user_id
+
+=head1 FREQUENTLY ASKED QUESTIONS (FAQ)
+
+=head2 If I have another column in the database that is not present on the form? How do I add a value to the form to still use 'populate_from_formfu'?
+
+Use $form->add_valid( name => 'value' );
+
+Example:
+    my $passwd = generate_passwd();
+    $form->add_valid( passwd => $passwd );
+    $resultset->populate_from_formfu( $form );
+
+add_valid() works for fieldnames that don't exist in the form.
 
 =head1 SUPPORT
 

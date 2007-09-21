@@ -1,3 +1,8 @@
+0.01002 2007-09-21
+
+	- Fix for Checkboxes for NOT NULL columns
+	- Copy Form->params(), so it's not changed
+
 0.01001	2007-08-22
 
 	- First CPAN release

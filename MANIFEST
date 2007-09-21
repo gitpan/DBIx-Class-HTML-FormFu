@@ -18,8 +18,12 @@ README
 t/01use.t
 t/create.sql
 t/fill_formfu_values.t
+t/fill_formfu_values_attrs.t
 t/form.yml
+t/form_attrs.yml
 t/lib/MySchema.pm
 t/lib/MySchema/Test.pm
 t/populate_from_formfu_create.t
+t/populate_from_formfu_create_attrs.t
 t/populate_from_formfu_insert.t
+t/unchecked_not_null_checkbox.t

@@ -9,7 +9,7 @@ BEGIN {
     }
 }
 
-plan tests => 7;
+plan tests => 2;
 
 use HTML::FormFu;
 use lib 't/lib';
@@ -26,26 +26,18 @@ map { $_->delete } grep { defined } $rs->find({});
 
 {
     my $row = $rs->new_result({
-        text_col       => 'xyza',
-        password_col   => 'xyzb',
         checkbox_col   => 'xyzfoo',
-        select_col     => 'xyz2',
-        radio_col      => 'xyzyes',
-        radiogroup_col => 'xyz3',
         });
     
     $row->insert;
 }
 
-# Fake submitted form
+# an unchecked Checkbox causes no key/value to be submitted at all
+# this is a problem for NOT NULL columns
+# ensure the column's default value gets inserted
+
 $form->process({
-    hidden_col     => 1,
-    text_col       => 'a',
-    password_col   => 'b',
-    checkbox_col   => 'foo',
-    select_col     => '2',
-    radio_col      => 'yes',
-    radiogroup_col => '3',
+    hidden_col => 1,
     });
 
 {
@@ -57,12 +49,7 @@ $form->process({
 {
     my $row = $rs->find({ hidden_col => 1 });
     
-    is( $row->text_col,       'a' );
-    is( $row->password_col,   'b');
-    is( $row->checkbox_col,   'foo' );
-    is( $row->select_col,     '2' );
-    is( $row->radio_col,      'yes' );
-    is( $row->radiogroup_col, '3' );
+    is( $row->checkbox_col, '0' );
 }
 
 # empty db again

@@ -1,3 +1,8 @@
+0.01003 2007-09-24
+
+	- Use has_column() and set_column() instead of can() to ensure we don't 
+	  delete a record, instead of updating a column named 'delete'!
+
 0.01002 2007-09-21
 
 	- Fix for Checkboxes for NOT NULL columns

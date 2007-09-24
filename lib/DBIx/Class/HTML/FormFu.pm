@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Carp qw( croak );
 
-our $VERSION = '0.01002';
+our $VERSION = '0.01003';
 
 sub fill_formfu_values {
     my ( $dbic, $form, $attrs ) = @_;
@@ -11,32 +11,38 @@ sub fill_formfu_values {
     $attrs = {
         prefix_col => '',
         suffix_col => '',
-        %{$attrs || {}}
+        %{ $attrs || {} }
     };
     my $prefix = $attrs->{prefix_col};
     my $suffix = $attrs->{suffix_col};
-    
+
     my $fields;
-    eval {
-        $fields = $form->get_fields;
-    };
+    eval { $fields = $form->get_fields; };
     croak "require a compatible form object: $@" if $@;
-    
+
     for my $field (@$fields) {
         my $field_name = $field->name;
         next unless defined $field_name;
 
         my ($dbic_name) = ( $field_name =~ /\A(?:$prefix)?(.*)(?:$suffix)?\z/ );
-        next unless $dbic->can( $dbic_name );
-        
-        if ( ref $dbic->$dbic_name && $dbic->$dbic_name->can('id') && $dbic->$dbic_name->id ) {
-		    $field->default( $dbic->$dbic_name->id );
-		}
-		else {
-            $field->default( $dbic->$dbic_name );
-		}
+        next
+          unless ( $dbic->has_column($dbic_name)
+            || $dbic->result_source->has_relationship($dbic_name) );
+
+        if (   $dbic->result_source->has_relationship($dbic_name)
+            && $dbic->result_source->related_source($dbic_name)
+            ->has_column('id')
+            && $dbic->result_source->related_source($dbic_name)
+            ->get_column('id') )
+        {
+            $field->default( $dbic->result_source->related_source($dbic_name)
+                  ->get_column('id') );
+        }
+        else {
+            $field->default( $dbic->get_column($dbic_name) );
+        }
     }
-    
+
     return $form;
 }
 
@@ -46,46 +52,50 @@ sub populate_from_formfu {
     $attrs = {
         prefix_col => '',
         suffix_col => '',
-        %{$attrs || {}}
+        %{ $attrs || {} }
     };
 
     my %checkbox;
     eval {
-        %checkbox = 
-            map { $_->name => 1 }
-            grep { defined $_->name }
-            @{ $form->get_fields({ type => 'Checkbox' }) || [] };
+        %checkbox =
+          map { $_->name => 1 }
+          grep { defined $_->name }
+          @{ $form->get_fields( { type => 'Checkbox' } ) || [] };
     };
     croak "require a compatible form object: $@" if $@;
-    
+
     my $params = $form->params;
 
     for my $col ( $dbic->result_source->columns ) {
         my $col_info    = $dbic->column_info($col);
         my $is_nullable = $col_info->{is_nullable} || 0;
         my $data_type   = $col_info->{data_type} || '';
-        my $form_col    = $attrs->{prefix_col}. $col. $attrs->{suffix_col};
-        my $value       = exists $params->{$form_col} ? $params->{$form_col} : undef;
+        my $form_col    = $attrs->{prefix_col} . $col . $attrs->{suffix_col};
+        my $value = exists $params->{$form_col} ? $params->{$form_col} : undef;
 
-        if ( ( $is_nullable
-               || $data_type =~ m/^timestamp|date|int|float|numeric/i )
+        if (
+            (
+                   $is_nullable
+                || $data_type =~ m/^timestamp|date|int|float|numeric/i
+            )
             && defined $value
-            && $value eq '')
+            && $value eq ''
+          )
         {
             $value = undef;
-            $dbic->$col($value);
+            $dbic->set_column( $col => $value );
         }
-        
+
         if ( $checkbox{$form_col} && !defined $value && !$is_nullable ) {
-            $dbic->$col( $col_info->{default_value} );
+            $dbic->set_column( $col => $col_info->{default_value} );
         }
         elsif ( defined $value || $checkbox{$form_col} ) {
-            $dbic->$col($value);
+            $dbic->set_column( $col => $value );
         }
     }
 
     $dbic->update_or_insert;
-    
+
     return $dbic;
 }
 

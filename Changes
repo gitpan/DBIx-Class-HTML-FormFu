@@ -1,3 +1,9 @@
+0.01004 2007-10-03
+
+	- Changed back to using named methods, as get_column / set_column 
+	  doesn't call the DBIC inflators / deflators.
+	- Added a CAVEATS section to docs, explaining the issues.
+
 0.01003 2007-09-24
 
 	- Use has_column() and set_column() instead of can() to ensure we don't 

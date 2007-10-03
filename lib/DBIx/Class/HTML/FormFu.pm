@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Carp qw( croak );
 
-our $VERSION = '0.01003';
+our $VERSION = '0.01004';
 
 sub fill_formfu_values {
     my ( $dbic, $form, $attrs ) = @_;
@@ -35,11 +35,12 @@ sub fill_formfu_values {
             && $dbic->result_source->related_source($dbic_name)
             ->get_column('id') )
         {
-            $field->default( $dbic->result_source->related_source($dbic_name)
-                  ->get_column('id') );
+            $field->default(
+                $dbic->result_source->related_source($dbic_name)->id
+                );
         }
         else {
-            $field->default( $dbic->get_column($dbic_name) );
+            $field->default( $dbic->$dbic_name );
         }
     }
 
@@ -83,14 +84,14 @@ sub populate_from_formfu {
           )
         {
             $value = undef;
-            $dbic->set_column( $col => $value );
+            $dbic->$col($value);
         }
 
         if ( $checkbox{$form_col} && !defined $value && !$is_nullable ) {
-            $dbic->set_column( $col => $col_info->{default_value} );
+            $dbic->$col( $col_info->{default_value} );
         }
         elsif ( defined $value || $checkbox{$form_col} ) {
-            $dbic->set_column( $col => $value );
+            $dbic->$col($value);
         }
     }
 
@@ -135,6 +136,7 @@ The hasref takes to arguments:
 =head2 Example
 
 If you have the following form fields:
+
     private_street
     private_city
     private_email
@@ -143,12 +145,14 @@ If you have the following form fields:
     office_email
 
 You most likely would like to save both datasets in same table:
+
     my $private = $user->new_related( 'data', { type => 'private' } );
     $private->populate_from_formfu( $form, { prefix_col => 'private_' } );
     my $office = $user->new_related( 'data', { type => 'office' } );
     $office->populate_from_formfu( $form, { prefix_col => 'office_' } );
 
 The table needs the following rows:
+
     id     (not really needed)
     street
     city
@@ -163,11 +167,22 @@ The table needs the following rows:
 Use $form->add_valid( name => 'value' );
 
 Example:
+
     my $passwd = generate_passwd();
     $form->add_valid( passwd => $passwd );
     $resultset->populate_from_formfu( $form );
 
 add_valid() works for fieldnames that don't exist in the form.
+
+=head1 CAVEATS
+
+To ensure your column's inflators and deflators are called, we have to 
+get / set values using their named methods, and not with C<get_column> / 
+C<set_column>.
+
+Because of this, beware of having column names which clash with DBIx::Class 
+built-in method-names, such as C<delete>. - It will have obviously 
+undesirable results!
 
 =head1 SUPPORT
 

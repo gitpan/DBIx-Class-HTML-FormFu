@@ -1,3 +1,7 @@
+0.01005 2008-06-19
+
+    - Deprecated - use HTML::FormFu::Model::DBIC instead
+
 0.01004 2007-10-03
 
 	- Changed back to using named methods, as get_column / set_column 

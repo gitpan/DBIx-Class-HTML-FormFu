@@ -50,11 +50,11 @@ map { $_->delete } grep { defined } $rs->find({});
     
     my $fs = $form->get_element;
     
-    is( $fs->get_field('attrs_hidden_col')->render->{value}, 1 );
-    is( $fs->get_field('attrs_text_col')->render->{value}, 'a');
-    is( $fs->get_field('attrs_password_col')->render->{value}, undef);
+    is( $fs->get_field('attrs_hidden_col')->render_data->{value}, 1 );
+    is( $fs->get_field('attrs_text_col')->render_data->{value}, 'a');
+    is( $fs->get_field('attrs_password_col')->render_data->{value}, undef);
     
-    my $checkbox = $fs->get_field('attrs_checkbox_col')->render;
+    my $checkbox = $fs->get_field('attrs_checkbox_col')->render_data;
     
     is( $checkbox->{value}, 'foo' );
     is( $checkbox->{attributes}{checked}, 'checked' );
@@ -62,7 +62,7 @@ map { $_->delete } grep { defined } $rs->find({});
     # accessing undocumented HTML::FormFu internals below
     # may break in the future
     
-    my $select = $fs->get_field('attrs_select_col')->render;
+    my $select = $fs->get_field('attrs_select_col')->render_data;
     
     is( $select->{options}[0]{value}, 1 );
     ok( !exists $select->{options}[0]{attributes}{selected} );
@@ -73,7 +73,7 @@ map { $_->delete } grep { defined } $rs->find({});
     is( $select->{options}[2]{value}, 3 );
     ok( !exists $select->{options}[2]{attributes}{selected} );
     
-    my @radio = map { $_->render } @{ $form->get_fields('attrs_radio_col') };
+    my @radio = map { $_->render_data } @{ $form->get_fields('attrs_radio_col') };
     
     is( $radio[0]->{value}, 'yes' );
     is( $radio[0]->{attributes}{checked}, 'checked' );
@@ -81,7 +81,7 @@ map { $_->delete } grep { defined } $rs->find({});
     is( $radio[1]->{value}, 'no' );
     ok( !exists $radio[1]->{attributes}{checked} );
     
-    my @rg_option = @{ $fs->get_field('attrs_radiogroup_col')->render->{options} };
+    my @rg_option = @{ $fs->get_field('attrs_radiogroup_col')->render_data->{options} };
     
     is( $rg_option[0]->{value}, 1 );
     ok( !exists $rg_option[0]->{attributes}{checked} );
@@ -93,7 +93,7 @@ map { $_->delete } grep { defined } $rs->find({});
     is( $rg_option[2]->{attributes}{checked}, 'checked' );
     
     # column is inflated
-    my $date = $fs->get_field('attrs_date_col')->render->{value};
+    my $date = $fs->get_field('attrs_date_col')->render_data->{value};
     
     like( $date, qr/31/ );
     like( $date, qr/12/ );

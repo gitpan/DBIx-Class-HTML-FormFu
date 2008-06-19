@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Carp qw( croak );
 
-our $VERSION = '0.01004';
+our $VERSION = '0.01005';
 
 sub fill_formfu_values {
     my ( $dbic, $form, $attrs ) = @_;
@@ -106,7 +106,12 @@ __END__
 
 =head1 NAME
 
-DBIx::Class::HTML::FormFu - Fill a HTML::FormFu form from the database and vice-versa
+DBIx::Class::HTML::FormFu - DEPRECATED - use HTML::FormFu::Model::DBIC instead
+
+=head1 DEPRECATED
+
+For new applications, you're advised to use L<HTML::FormFu::Model::DBIC>
+instead.
 
 =head1 SYNOPSIS
 

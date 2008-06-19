@@ -8,5 +8,13 @@ requires 'HTML::FormFu';
 
 license 'perl';
 
+warn <<END;
+
+**** WARNING
+**** This module is deprecated.
+**** For new applications, you're advised to use HTML::FormFu::Model::DBIC
+
+END
+
 auto_install();
 &WriteAll;
